@@ -27,7 +27,7 @@ deploy:
     username: ${PACKAGECLOUD_USER}
     repository: ${PACKAGECLOUD_REPO}
     token: ${PACKAGECLOUD_TOKEN}
-    dist: ${OS}/${DIST}
+    dist: ubuntu/precise
     skip_cleanup: true
     on:
       branch: master
