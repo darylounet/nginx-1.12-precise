@@ -1,0 +1,42 @@
+sudo: required
+services:
+  - docker
+
+cache:
+    directories:
+     - $HOME/.cache
+
+language: C
+
+before_install:
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo apt-get update
+  - sudo apt-get -y install docker-ce
+  - ./travis-build.sh
+
+script:
+  - mkdir -p build
+  - docker run build-nginx-precise
+  - docker cp $(docker ps -l -q):/src build/
+  - mv build/src/*.deb ./
+  - rm -Rf build
+
+deploy:
+  - provider: packagecloud
+    username: ${PACKAGECLOUD_USER}
+    repository: ${PACKAGECLOUD_REPO}
+    token: ${PACKAGECLOUD_TOKEN}
+    dist: ${OS}/${DIST}
+    skip_cleanup: true
+    on:
+      branch: master
+      condition: -n "${PACKAGECLOUD_TOKEN}"
+  - provider: releases
+    api_key:
+      secure: jxIf0bnBjO1fhypqfnKcnzNXSOpbAt+CES/QfB2yT3HgZ97AJXNilSGA/JuyHetKzMzXJK5Ac4OgZ5UppNq98D+qIvkCAt/uWEirtC5gg6zSzZJrhDkHL2Fi4KAcQBdoOoTLjLSarJMID7vdUu8d+kycxtcMeuak7PrGdkWp2QVmfdqmg0q5eHkYAd5/aLuM71/i9fhjF7sZYl0XiAObkIa77dZKznnx3Wnr4Hoo0QA/WliXSbHrQpwVNw2/s9QkUiPDkIojI4DY9uxAs0JYPpOaOgVkEieyOm3nLB2Hd2KuZhZi6ErJzQ1uZ3DK2VqZVWlXpyDxi1QWLx9IU4ZXdbw0l8yWoc9cycL5mCVigWZA1gY6SkZ2pvVBDTQWNjc9pZO3mL9GhKfhVVfNqe2OjXtE/lHOIxzBXkxaFGqvoSazHD6aMlgjJwH2u3Mk+VxjLZaWrcup1C4xABSFL5sP8fM7Om0wv1EjgknVhQ5WY41RHIxmXPrAbGy9cVjRg9acxBkHScpt8Znnx4RIDCm3i0t6zeQ8ii7HbiYrZVunnbsKclNyezCvNLz2h4C6O6HZbLZQOhmb9FW4LrK4zKOfQODZ+yzjEStBPmIb0VYCMojg20y07CnnSjrZmmvNCdrNhgLTWsHRs3qZll0YFa42osWdQI4o3Hvo+RY+yDi7TMs=
+    file_glob: true
+    file: ./*.deb
+    skip_cleanup: true
+    on:
+      branch: master
